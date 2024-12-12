@@ -2,8 +2,8 @@ package info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.s
 
 import androidx.annotation.NonNull;
 
+import app.aaps.core.utils.pump.ByteUtil;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.IRawRepresentable;
-import info.nightscout.pump.common.utils.ByteUtil;
 
 public class BasalDeliverySchedule extends DeliverySchedule implements IRawRepresentable {
 
@@ -32,7 +32,7 @@ public class BasalDeliverySchedule extends DeliverySchedule implements IRawRepre
         return rawData;
     }
 
-    @Override
+    @NonNull @Override
     public InsulinScheduleType getType() {
         return InsulinScheduleType.BASAL_SCHEDULE;
     }

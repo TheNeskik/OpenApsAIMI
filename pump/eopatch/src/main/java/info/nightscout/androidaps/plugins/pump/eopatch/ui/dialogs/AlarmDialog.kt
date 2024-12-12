@@ -8,21 +8,23 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
+import app.aaps.core.data.time.T
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.ui.UiInteraction
-import app.aaps.core.interfaces.utils.T
+import app.aaps.core.ui.R
 import dagger.android.support.DaggerDialogFragment
 import info.nightscout.androidaps.plugins.pump.eopatch.alarm.AlarmCode
 import info.nightscout.androidaps.plugins.pump.eopatch.alarm.AlarmProcess
 import info.nightscout.androidaps.plugins.pump.eopatch.alarm.IAlarmProcess
 import info.nightscout.androidaps.plugins.pump.eopatch.bindingadapters.setOnSafeClickListener
 import info.nightscout.androidaps.plugins.pump.eopatch.ble.IPatchManager
-import info.nightscout.androidaps.plugins.pump.eopatch.ble.IPreferenceManager
+import info.nightscout.androidaps.plugins.pump.eopatch.ble.PatchManagerExecutor
+import info.nightscout.androidaps.plugins.pump.eopatch.ble.PreferenceManager
 import info.nightscout.androidaps.plugins.pump.eopatch.databinding.DialogAlarmBinding
 import info.nightscout.androidaps.plugins.pump.eopatch.ui.AlarmHelperActivity
-import app.aaps.core.ui.R
+import info.nightscout.androidaps.plugins.pump.eopatch.vo.Alarms
 import io.reactivex.rxjava3.disposables.Disposable
 import javax.inject.Inject
 
@@ -31,9 +33,12 @@ class AlarmDialog : DaggerDialogFragment() {
     @Inject lateinit var uiInteraction: UiInteraction
     @Inject lateinit var aapsLogger: AAPSLogger
     @Inject lateinit var patchManager: IPatchManager
+    @Inject lateinit var patchManagerExecutor: PatchManagerExecutor
+    @Inject lateinit var preferenceManager: PreferenceManager
     @Inject lateinit var rxBus: RxBus
     @Inject lateinit var aapsSchedulers: AapsSchedulers
-    @Inject lateinit var pm: IPreferenceManager
+    @Inject lateinit var pm: PreferenceManager
+    @Inject lateinit var alarms: Alarms
 
     var helperActivity: AlarmHelperActivity? = null
     var alarmCode: AlarmCode? = null
@@ -56,7 +61,7 @@ class AlarmDialog : DaggerDialogFragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        mAlarmProcess = AlarmProcess(patchManager, rxBus)
+        mAlarmProcess = AlarmProcess(patchManager, patchManagerExecutor, rxBus)
 
         dialog?.window?.requestFeature(Window.FEATURE_NO_TITLE)
         dialog?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
@@ -87,14 +92,14 @@ class AlarmDialog : DaggerDialogFragment() {
                 mAlarmProcess.doAction(requireContext(), ac)
                     .subscribeOn(aapsSchedulers.io)
                     .subscribe({ ret ->
-                                   aapsLogger.debug("Alarm processing result :${ret}")
+                                   aapsLogger.debug("Alarm processing result :$ret")
                                    if (ret == IAlarmProcess.ALARM_HANDLED || ret == IAlarmProcess.ALARM_HANDLED_BUT_NEED_STOP_BEEP) {
                                        if (ret == IAlarmProcess.ALARM_HANDLED_BUT_NEED_STOP_BEEP) {
-                                           pm.getAlarms().needToStopBeep.add(ac)
+                                           alarms.needToStopBeep.add(ac)
                                        }
                                        alarmCode?.let {
-                                           patchManager.preferenceManager.getAlarms().handle(it)
-                                           patchManager.preferenceManager.flushAlarms()
+                                           alarms.handle(it)
+                                           preferenceManager.flushAlarms()
                                        }
                                        dismiss()
                                    } else if (ret == IAlarmProcess.ALARM_PAUSE) {
@@ -121,7 +126,7 @@ class AlarmDialog : DaggerDialogFragment() {
         }
         startAlarm("onViewCreated")
 
-        disposable = patchManager.observePatchLifeCycle()
+        disposable = preferenceManager.observePatchLifeCycle()
             .observeOn(aapsSchedulers.main)
             .subscribe {
                 if (it.isShutdown) {

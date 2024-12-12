@@ -19,6 +19,8 @@ import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.sharedPreferences.SP
+import app.aaps.core.utils.pump.ByteUtil
+import app.aaps.core.utils.pump.ThreadUtil
 import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.RileyLinkConst
 import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.RileyLinkUtil
 import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.ble.data.GattAttributes
@@ -31,8 +33,6 @@ import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.ble.operation
 import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.defs.RileyLinkError
 import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.defs.RileyLinkServiceState
 import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.service.RileyLinkServiceData
-import info.nightscout.pump.common.utils.ByteUtil
-import info.nightscout.pump.common.utils.ThreadUtil
 import org.apache.commons.lang3.StringUtils
 import java.util.Locale
 import java.util.UUID
@@ -227,7 +227,7 @@ class RileyLinkBLE @Inject constructor(
                 // Tell Android that we want the notifications
                 bluetoothConnectionGatt?.setCharacteristicNotification(chara, true)
                 val list = chara.descriptors
-                if (list.size > 0) {
+                if (list.isNotEmpty()) {
                     if (gattDebugEnabled) for (i in list.indices) aapsLogger.debug(LTag.PUMPBTCOMM, "Found descriptor: " + list[i].toString())
                     // Tell the remote device to send the notifications
                     mCurrentOperation = DescriptorWriteOperation(aapsLogger, bluetoothConnectionGatt, list[0], BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)

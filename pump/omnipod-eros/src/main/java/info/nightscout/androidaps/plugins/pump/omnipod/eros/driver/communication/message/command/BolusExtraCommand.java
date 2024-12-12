@@ -1,11 +1,13 @@
 package info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.command;
 
+import androidx.annotation.NonNull;
+
 import org.joda.time.Duration;
 
+import app.aaps.core.utils.pump.ByteUtil;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.MessageBlock;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.MessageBlockType;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.OmnipodConstants;
-import info.nightscout.pump.common.utils.ByteUtil;
 
 public class BolusExtraCommand extends MessageBlock {
     private final boolean acknowledgementBeep;
@@ -60,7 +62,7 @@ public class BolusExtraCommand extends MessageBlock {
         return MessageBlockType.BOLUS_EXTRA;
     }
 
-    @Override
+    @NonNull @Override
     public String toString() {
         return "BolusExtraCommand{" +
                 "acknowledgementBeep=" + acknowledgementBeep +

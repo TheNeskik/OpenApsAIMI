@@ -19,13 +19,12 @@ import app.aaps.wear.tile.ActionsTileService
 import app.aaps.wear.tile.QuickWizardTileService
 import app.aaps.wear.tile.TempTargetTileService
 import app.aaps.wear.tile.TileBase
-import app.aaps.wear.watchfaces.AapsLargeWatchface
-import app.aaps.wear.watchfaces.BigChartWatchface
+import app.aaps.wear.tile.UserActionTileService
 import app.aaps.wear.watchfaces.CircleWatchface
 import app.aaps.wear.watchfaces.CustomWatchface
 import app.aaps.wear.watchfaces.DigitalStyleWatchface
-import app.aaps.wear.watchfaces.NoChartWatchface
 import app.aaps.wear.watchfaces.utils.BaseWatchFace
+import app.aaps.wear.wearStepCount.StepCountListener
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 
@@ -35,6 +34,7 @@ abstract class WearServicesModule {
 
     @ContributesAndroidInjector abstract fun contributesDataLayerListenerService(): DataLayerListenerServiceWear
     @ContributesAndroidInjector abstract fun contributesHeartRateListenerService(): HeartRateListener
+    @ContributesAndroidInjector abstract fun contributesStepsCountListenerService(): StepCountListener
     @ContributesAndroidInjector abstract fun contributesBaseComplicationProviderService(): BaseComplicationProviderService
     @ContributesAndroidInjector abstract fun contributesBrCobIobComplication(): BrCobIobComplication
     @ContributesAndroidInjector abstract fun contributesCobDetailedComplication(): CobDetailedComplication
@@ -50,15 +50,13 @@ abstract class WearServicesModule {
     @ContributesAndroidInjector abstract fun contributesWallpaperComplication(): WallpaperComplication
 
     @ContributesAndroidInjector abstract fun contributesBaseWatchFace(): BaseWatchFace
-    @ContributesAndroidInjector abstract fun contributesAapsLargeWatchface(): AapsLargeWatchface
     @ContributesAndroidInjector abstract fun contributesDigitalStyleWatchface(): DigitalStyleWatchface
-    @ContributesAndroidInjector abstract fun contributesBIGChart(): BigChartWatchface
-    @ContributesAndroidInjector abstract fun contributesNOChart(): NoChartWatchface
     @ContributesAndroidInjector abstract fun contributesCircleWatchface(): CircleWatchface
     @ContributesAndroidInjector abstract fun contributesCustomWatchface(): CustomWatchface
 
     @ContributesAndroidInjector abstract fun contributesTileBase(): TileBase
     @ContributesAndroidInjector abstract fun contributesQuickWizardTileService(): QuickWizardTileService
+    @ContributesAndroidInjector abstract fun contributesUserActionTileService(): UserActionTileService
     @ContributesAndroidInjector abstract fun contributesTempTargetTileService(): TempTargetTileService
     @ContributesAndroidInjector abstract fun contributesActionsTileService(): ActionsTileService
 

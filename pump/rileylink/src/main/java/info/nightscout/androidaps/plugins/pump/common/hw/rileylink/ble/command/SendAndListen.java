@@ -1,16 +1,18 @@
 package info.nightscout.androidaps.plugins.pump.common.hw.rileylink.ble.command;
 
+import androidx.annotation.NonNull;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import javax.inject.Inject;
 
+import app.aaps.core.utils.pump.ByteUtil;
 import dagger.android.HasAndroidInjector;
 import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.ble.data.RadioPacket;
 import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.ble.defs.RileyLinkCommandType;
 import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.ble.defs.RileyLinkFirmwareVersion;
 import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.service.RileyLinkServiceData;
-import info.nightscout.pump.common.utils.ByteUtil;
 
 public class SendAndListen extends RileyLinkCommand {
 
@@ -34,7 +36,7 @@ public class SendAndListen extends RileyLinkCommand {
     }
 
 
-    public SendAndListen(HasAndroidInjector injector, byte sendChannel, byte repeatCount, int delayBetweenPackets_ms, byte listenChannel,
+    public SendAndListen(@NonNull HasAndroidInjector injector, byte sendChannel, byte repeatCount, int delayBetweenPackets_ms, byte listenChannel,
                          int timeout_ms, byte retryCount, Integer preambleExtension_ms, RadioPacket packetToSend
 
     ) {

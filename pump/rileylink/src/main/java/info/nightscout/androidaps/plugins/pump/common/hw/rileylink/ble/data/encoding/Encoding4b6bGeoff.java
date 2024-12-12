@@ -1,13 +1,15 @@
 package info.nightscout.androidaps.plugins.pump.common.hw.rileylink.ble.data.encoding;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 import app.aaps.core.interfaces.logging.AAPSLogger;
+import app.aaps.core.utils.pump.ByteUtil;
 import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.ble.RileyLinkCommunicationException;
 import info.nightscout.androidaps.plugins.pump.common.hw.rileylink.ble.defs.RileyLinkBLEError;
-import info.nightscout.pump.common.utils.ByteUtil;
 
 /**
  * Created by andy on 11/24/18.
@@ -21,7 +23,7 @@ public class Encoding4b6bGeoff extends Encoding4b6bAbstract {
         this.aapsLogger = aapsLogger;
     }
 
-    @Override public byte[] encode4b6b(byte[] data) {
+    @Override public byte[] encode4b6b(@NonNull byte[] data) {
         // if ((data.length % 2) != 0) {
         // LOG.error("Warning: data is odd number of bytes");
         // }
@@ -79,7 +81,7 @@ public class Encoding4b6bGeoff extends Encoding4b6bAbstract {
      * @return
      * @throws NumberFormatException
      */
-    @Override public byte[] decode4b6b(byte[] raw) throws RileyLinkCommunicationException {
+    @Override public byte[] decode4b6b(@NonNull byte[] raw) throws RileyLinkCommunicationException {
 
         StringBuilder errorMessageBuilder = new StringBuilder();
 

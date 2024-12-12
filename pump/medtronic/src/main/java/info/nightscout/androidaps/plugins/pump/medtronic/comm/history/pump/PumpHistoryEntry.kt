@@ -1,11 +1,11 @@
 package info.nightscout.androidaps.plugins.pump.medtronic.comm.history.pump
 
+import app.aaps.core.utils.StringUtil
+import app.aaps.core.utils.pump.ByteUtil
 import com.google.gson.annotations.Expose
 import info.nightscout.androidaps.plugins.pump.medtronic.comm.history.MedtronicHistoryEntry
 import info.nightscout.androidaps.plugins.pump.medtronic.data.dto.BolusDTO
 import info.nightscout.androidaps.plugins.pump.medtronic.defs.MedtronicDeviceType
-import info.nightscout.pump.common.utils.ByteUtil
-import info.nightscout.pump.common.utils.StringUtil
 import java.util.Objects
 
 /**
@@ -137,7 +137,7 @@ class PumpHistoryEntry : MedtronicHistoryEntry() {
 
             if (entry.entryType == PumpHistoryEntryType.Bolus) {
                 val otherOne: BolusDTO = entry.decodedData["Object"] as BolusDTO
-                return (thisOne.value.equals(otherOne.value))
+                return (thisOne.value == otherOne.value)
             } else
                 return false
         }

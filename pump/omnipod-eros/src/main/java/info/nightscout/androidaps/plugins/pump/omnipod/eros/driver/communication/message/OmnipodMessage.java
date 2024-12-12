@@ -8,6 +8,7 @@ import java.util.List;
 
 import app.aaps.core.interfaces.logging.AAPSLogger;
 import app.aaps.core.interfaces.logging.LTag;
+import app.aaps.core.utils.pump.ByteUtil;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.command.CancelDeliveryCommand;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.command.GetStatusCommand;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.DeliveryType;
@@ -18,7 +19,6 @@ import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.Po
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.exception.CrcMismatchException;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.exception.MessageDecodingException;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.exception.NotEnoughDataException;
-import info.nightscout.pump.common.utils.ByteUtil;
 
 public class OmnipodMessage {
 
@@ -38,12 +38,12 @@ public class OmnipodMessage {
         this.sequenceNumber = sequenceNumber;
     }
 
-    public static OmnipodMessage decodeMessage(byte[] data) {
+    @NonNull public static OmnipodMessage decodeMessage(byte[] data) {
         if (data.length < 10) {
             throw new NotEnoughDataException(data);
         }
 
-        int address = ByteUtil.INSTANCE.toInt((int) data[0], (int) data[1], (int) data[2],
+        int address = ByteUtil.INSTANCE.toInt(data[0], (int) data[1], (int) data[2],
                 (int) data[3], ByteUtil.BitConversion.BIG_ENDIAN);
         byte b9 = data[4];
         int bodyLength = ByteUtil.INSTANCE.convertUnsignedByteToInt(data[5]);
@@ -64,7 +64,7 @@ public class OmnipodMessage {
         return new OmnipodMessage(address, blocks, sequenceNumber);
     }
 
-    private static List<MessageBlock> decodeBlocks(byte[] data) {
+    @NonNull private static List<MessageBlock> decodeBlocks(byte[] data) {
         List<MessageBlock> blocks = new ArrayList<>();
         int index = 0;
         while (index < data.length) {
@@ -112,7 +112,7 @@ public class OmnipodMessage {
         return address;
     }
 
-    public List<MessageBlock> getMessageBlocks() {
+    @NonNull public List<MessageBlock> getMessageBlocks() {
         return new ArrayList<>(messageBlocks);
     }
 
@@ -141,7 +141,7 @@ public class OmnipodMessage {
         }
     }
 
-    public boolean containsBlock(Class<? extends MessageBlock> blockType) {
+    public boolean containsBlock(@NonNull Class<? extends MessageBlock> blockType) {
         for (MessageBlock messageBlock : messageBlocks) {
             if (blockType.isInstance(messageBlock)) {
                 return true;

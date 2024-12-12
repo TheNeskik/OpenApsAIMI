@@ -1,22 +1,22 @@
 package info.nightscout.pump.diaconn.service
 
-import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import android.os.SystemClock
-import app.aaps.core.interfaces.configuration.Constants
+import app.aaps.core.data.configuration.Constants
+import app.aaps.core.data.pump.defs.PumpType
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.notifications.Notification
+import app.aaps.core.interfaces.objects.Instantiator
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.Profile
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.pump.BolusProgressData
 import app.aaps.core.interfaces.pump.PumpEnactResult
 import app.aaps.core.interfaces.pump.PumpSync
-import app.aaps.core.interfaces.pump.defs.PumpType
 import app.aaps.core.interfaces.queue.Callback
 import app.aaps.core.interfaces.queue.Command
 import app.aaps.core.interfaces.queue.CommandQueue
@@ -62,7 +62,7 @@ import info.nightscout.pump.diaconn.packet.LanguageInquirePacket
 import info.nightscout.pump.diaconn.packet.LanguageSettingPacket
 import info.nightscout.pump.diaconn.packet.LogStatusInquirePacket
 import info.nightscout.pump.diaconn.packet.SerialNumInquirePacket
-import info.nightscout.pump.diaconn.packet.SneckLimitInquirePacket
+import info.nightscout.pump.diaconn.packet.SnackLimitInquirePacket
 import info.nightscout.pump.diaconn.packet.SoundInquirePacket
 import info.nightscout.pump.diaconn.packet.SoundSettingPacket
 import info.nightscout.pump.diaconn.packet.TempBasalInquirePacket
@@ -101,6 +101,7 @@ class DiaconnG8Service : DaggerService() {
     @Inject lateinit var diaconnLogUploader: DiaconnLogUploader
     @Inject lateinit var diaconnHistoryRecordDao: DiaconnHistoryRecordDao
     @Inject lateinit var uiInteraction: UiInteraction
+    @Inject lateinit var instantiator: Instantiator
 
     private val disposable = CompositeDisposable()
     private val mBinder: IBinder = LocalBinder()
@@ -126,7 +127,7 @@ class DiaconnG8Service : DaggerService() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        return Service.START_STICKY
+        return START_STICKY
     }
 
     override fun onDestroy() {
@@ -172,7 +173,7 @@ class DiaconnG8Service : DaggerService() {
                 sendMessage(BigAPSMainInfoInquirePacket(injector)) // APS Pump Main Info
             } else {
                 sendMessage(BasalLimitInquirePacket(injector)) // basal Limit
-                sendMessage(SneckLimitInquirePacket(injector)) // bolus Limit
+                sendMessage(SnackLimitInquirePacket(injector)) // bolus Limit
                 sendMessage(BigMainInfoInquirePacket(injector)) // Pump Main Info
                 sendMessage(SoundInquirePacket(injector)) // sounds
                 sendMessage(DisplayTimeInquirePacket(injector)) // display
@@ -240,7 +241,6 @@ class DiaconnG8Service : DaggerService() {
             diaconnG8Pump.fromTemporaryBasal(tbr)
             rxBus.send(EventDiaconnG8NewStatus())
             rxBus.send(EventInitializationChanged())
-            //NSUpload.uploadDeviceStatus();
             if (diaconnG8Pump.dailyTotalUnits > diaconnG8Pump.maxDailyTotalUnits * Constants.dailyLimitWarning) {
                 aapsLogger.debug(LTag.PUMPCOMM, "Approaching daily limit: " + diaconnG8Pump.dailyTotalUnits + "/" + diaconnG8Pump.maxDailyTotalUnits)
                 if (System.currentTimeMillis() > lastApproachingDailyLimit + 30 * 60 * 1000) {
@@ -262,7 +262,7 @@ class DiaconnG8Service : DaggerService() {
 
     fun loadHistory(): PumpEnactResult {
         if (!diaconnG8Plugin.isInitialized()) {
-            val result = PumpEnactResult(injector).success(false)
+            val result = instantiator.providePumpEnactResult().success(false)
             result.comment = "pump not initialized"
             return result
         }
@@ -272,7 +272,7 @@ class DiaconnG8Service : DaggerService() {
             sendMessage(IncarnationInquirePacket(injector))
         }
 
-        val result = PumpEnactResult(injector)
+        val result = instantiator.providePumpEnactResult()
         var apsLastLogNum = 9999
         var apsWrappingCount = -1
         // get saved last log info
@@ -418,7 +418,7 @@ class DiaconnG8Service : DaggerService() {
     }
 
     fun setUserSettings(): PumpEnactResult {
-        val result = PumpEnactResult(injector)
+        val result = instantiator.providePumpEnactResult()
 
         val msg: DiaconnG8Packet = when (diaconnG8Pump.setUserOptionType) {
             DiaconnG8Pump.ALARM -> SoundSettingPacket(injector, diaconnG8Pump.beepAndAlarm, diaconnG8Pump.alarmIntensity)

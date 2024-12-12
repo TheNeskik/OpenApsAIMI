@@ -1,11 +1,12 @@
 package info.nightscout.androidaps.plugins.pump.medtronic.data.dto
 
+import app.aaps.core.data.pump.defs.PumpType
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
-import app.aaps.core.interfaces.pump.defs.PumpType
+import app.aaps.core.interfaces.pump.defs.determineCorrectBasalSize
+import app.aaps.core.utils.pump.ByteUtil
 import com.google.gson.annotations.Expose
 import info.nightscout.androidaps.plugins.pump.medtronic.util.MedtronicUtil
-import info.nightscout.pump.common.utils.ByteUtil
 import org.joda.time.Instant
 import java.util.Locale
 
@@ -54,10 +55,6 @@ class BasalProfile {
 
     private fun setRawData(data: ByteArray): Boolean {
         var dataInternal: ByteArray = data
-        // if (dataInternal == null) {
-        //     aapsLogger.error(LTag.PUMPCOMM, "setRawData: buffer is null!")
-        //     return false
-        // }
 
         // if we have just one entry through all day it looks like just length 1
         if (dataInternal.size == 1) {
@@ -66,7 +63,7 @@ class BasalProfile {
         if (dataInternal.size == MAX_RAW_DATA_SIZE) {
             rawData = dataInternal
         } else {
-            val len = Math.min(MAX_RAW_DATA_SIZE, data.size)
+            val len = MAX_RAW_DATA_SIZE.coerceAtMost(data.size)
             rawData = ByteArray(MAX_RAW_DATA_SIZE)
             System.arraycopy(data, 0, rawData, 0, len)
         }
@@ -143,7 +140,7 @@ class BasalProfile {
     fun getEntryForTime(`when`: Instant): BasalProfileEntry {
         var rval = BasalProfileEntry()
         val entries = getEntries()
-        if (entries.size == 0) {
+        if (entries.isEmpty()) {
             aapsLogger.warn(
                 LTag.PUMPCOMM, String.format(
                     Locale.ENGLISH, "getEntryForTime(%s): table is empty",
@@ -259,7 +256,7 @@ class BasalProfile {
 
         val basalByHour = DoubleArray(24)
 
-        if (entriesCopy == null || entriesCopy.size == 0) {
+        if (entriesCopy == null || entriesCopy.isEmpty()) {
             for (i in 0..23) {
                 basalByHour[i] = 0.0
             }
@@ -270,14 +267,14 @@ class BasalProfile {
             val current = entriesCopy[i]
             var currentTime = if (current.startTime_raw % 2 == 0) current.startTime_raw.toInt() else current.startTime_raw - 1
             currentTime = currentTime * 30 / 60
-            var lastHour: Int
-            lastHour = if (i + 1 == entriesCopy.size) {
-                24
-            } else {
-                val basalProfileEntry = entriesCopy[i + 1]
-                val rawTime = if (basalProfileEntry.startTime_raw % 2 == 0) basalProfileEntry.startTime_raw.toInt() else basalProfileEntry.startTime_raw - 1
-                rawTime * 30 / 60
-            }
+            var lastHour: Int =
+                if (i + 1 == entriesCopy.size) {
+                    24
+                } else {
+                    val basalProfileEntry = entriesCopy[i + 1]
+                    val rawTime = if (basalProfileEntry.startTime_raw % 2 == 0) basalProfileEntry.startTime_raw.toInt() else basalProfileEntry.startTime_raw - 1
+                    rawTime * 30 / 60
+                }
 
             // System.out.println("Current time: " + currentTime + " Next Time: " + lastHour);
             for (j in currentTime until lastHour) {
@@ -297,7 +294,7 @@ class BasalProfile {
     fun verify(pumpType: PumpType): Boolean {
         try {
             getEntries()
-        } catch (ex: Exception) {
+        } catch (_: Exception) {
             return false
         }
         val profilesByHour = getProfilesByHour(pumpType)

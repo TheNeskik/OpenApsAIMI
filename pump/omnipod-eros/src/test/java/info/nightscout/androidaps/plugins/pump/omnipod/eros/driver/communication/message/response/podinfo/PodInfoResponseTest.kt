@@ -1,10 +1,10 @@
 package info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.response.podinfo
 
+import app.aaps.core.utils.pump.ByteUtil
 import com.google.common.truth.Truth.assertThat
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.PodInfoType
-import info.nightscout.pump.common.utils.ByteUtil
-import kotlin.test.assertIsNot
 import org.junit.jupiter.api.Test
+import kotlin.test.assertIsNot
 
 internal class PodInfoResponseTest {
 
@@ -22,7 +22,7 @@ internal class PodInfoResponseTest {
     }
 
     @Test fun testMessageDecoding() {
-        val podInfoResponse = PodInfoResponse(ByteUtil.fromHexString("0216020d0000000000ab6a038403ff03860000285708030d"))
+        val podInfoResponse = PodInfoResponse(ByteUtil.fromHexString("0216020d0000000000ab6a038403ff03860000285708030d")!!)
         assertThat(podInfoResponse.subType).isEqualTo(PodInfoType.DETAILED_STATUS)
         val podInfo = podInfoResponse.podInfo as PodInfoDetailedStatus
         assertThat(podInfo.isFaultAccessingTables).isFalse()
@@ -30,7 +30,7 @@ internal class PodInfoResponseTest {
     }
 
     @Test fun testInvalidPodInfoTypeMessageDecoding() {
-        val podInfoResponse = PodInfoResponse(ByteUtil.fromHexString("0216020d0000000000ab6a038403ff03860000285708030d"))
+        val podInfoResponse = PodInfoResponse(ByteUtil.fromHexString("0216020d0000000000ab6a038403ff03860000285708030d")!!)
         assertThat(podInfoResponse.subType).isEqualTo(PodInfoType.DETAILED_STATUS)
         assertIsNot<PodInfoActiveAlerts>(podInfoResponse.podInfo)
     }

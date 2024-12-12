@@ -1,8 +1,6 @@
 package info.nightscout.pump.diaconn.packet
 
 import app.aaps.core.interfaces.logging.LTag
-import app.aaps.core.interfaces.pump.defs.PumpDescription
-import app.aaps.core.interfaces.pump.defs.PumpType
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.sharedPreferences.SP
 import dagger.android.HasAndroidInjector
@@ -16,6 +14,7 @@ import kotlin.math.floor
 /**
  * BigMainInfoInquireResponsePacket
  */
+@Suppress("SpellCheckingInspection")
 class BigMainInfoInquireResponsePacket(
     injector: HasAndroidInjector
 ) : DiaconnG8Packet(injector) {
@@ -23,14 +22,13 @@ class BigMainInfoInquireResponsePacket(
     @Inject lateinit var diaconnG8Pump: DiaconnG8Pump
     @Inject lateinit var sp: SP
     @Inject lateinit var rh: ResourceHelper
-    private var pumpDesc = PumpDescription(PumpType.DIACONN_G8)
 
     init {
         msgType = 0xb3.toByte()
         aapsLogger.debug(LTag.PUMPCOMM, "BigMainInfoInquireResponsePacket init")
     }
 
-    override fun handleMessage(data: ByteArray?) {
+    override fun handleMessage(data: ByteArray) {
         val result = defect(data)
         if (result != 0) {
             aapsLogger.debug(LTag.PUMPCOMM, "BigMainInfoInquireResponsePacket Got some Error")
@@ -319,7 +317,5 @@ class BigMainInfoInquireResponsePacket(
         aapsLogger.debug(LTag.PUMPCOMM, "baseAmount24 > " + diaconnG8Pump.baseAmount24)
     }
 
-    override fun getFriendlyName(): String {
-        return "PUMP_BIG_MAIN_INFO_INQUIRE_RESPONSE"
-    }
+    override val friendlyName = "PUMP_BIG_MAIN_INFO_INQUIRE_RESPONSE"
 }

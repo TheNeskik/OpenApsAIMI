@@ -2,18 +2,24 @@ package app.aaps.receivers
 
 import android.content.Context
 import androidx.work.Data
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
+import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import app.aaps.MainApp
 import app.aaps.R
+import app.aaps.core.data.time.T
 import app.aaps.core.interfaces.alerts.LocalAlertUtils
 import app.aaps.core.interfaces.aps.Loop
 import app.aaps.core.interfaces.configuration.Config
+import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.iob.IobCobCalculator
+import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.ProfileFunction
@@ -24,10 +30,9 @@ import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventProfileSwitchChanged
 import app.aaps.core.interfaces.sharedPreferences.SP
 import app.aaps.core.interfaces.utils.DateUtil
-import app.aaps.core.interfaces.utils.T
-import app.aaps.core.main.profile.ProfileSealed
-import app.aaps.core.main.utils.worker.LoggingWorker
-import app.aaps.database.impl.AppRepository
+import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
+import app.aaps.core.objects.profile.ProfileSealed
+import app.aaps.core.objects.workflow.LoggingWorker
 import app.aaps.plugins.configuration.maintenance.MaintenancePlugin
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +46,7 @@ class KeepAliveWorker(
 ) : LoggingWorker(context, params, Dispatchers.Default) {
 
     @Inject lateinit var localAlertUtils: LocalAlertUtils
-    @Inject lateinit var repository: AppRepository
+    @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var config: Config
     @Inject lateinit var iobCobCalculator: IobCobCalculator
     @Inject lateinit var loop: Loop
@@ -66,6 +71,26 @@ class KeepAliveWorker(
         const val KA_0 = "KeepAlive"
         private const val KA_5 = "KeepAlive_5"
         private const val KA_10 = "KeepAlive_10"
+
+        fun scheduleIfNotRunning(context: Context, aapsLogger: AAPSLogger, fabricPrivacy: FabricPrivacy) {
+            if (lastRun != 0L && lastRun + T.mins(20).msecs() < System.currentTimeMillis()) {
+                schedule(context)
+                aapsLogger.error(LTag.CORE, "KeepAliveRescheduled")
+                fabricPrivacy.logCustom("KeepAliveRescheduled")
+            }
+        }
+
+        fun schedule(context: Context) {
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                KA_0,
+                ExistingPeriodicWorkPolicy.UPDATE,
+                PeriodicWorkRequest.Builder(KeepAliveWorker::class.java, 15, TimeUnit.MINUTES)
+                    .setInputData(Data.Builder().putString("schedule", KA_0).build())
+                    .setInitialDelay(5, TimeUnit.SECONDS)
+                    .build()
+            )
+
+        }
     }
 
     override suspend fun doWorkAndLog(): Result {
@@ -118,7 +143,7 @@ class KeepAliveWorker(
     private fun databaseCleanup() {
         val lastRun = sp.getLong(R.string.key_last_cleanup_run, 0L)
         if (lastRun < dateUtil.now() - T.days(1).msecs()) {
-            val result = repository.cleanupDatabase(6 * 31, deleteTrackedChanges = false)
+            val result = persistenceLayer.cleanupDatabase(6 * 31, deleteTrackedChanges = false)
             aapsLogger.debug(LTag.CORE, "Cleanup result: $result")
             sp.putLong(R.string.key_last_cleanup_run, dateUtil.now())
         }
@@ -157,7 +182,7 @@ class KeepAliveWorker(
     private fun checkPump() {
         val pump = activePlugin.activePump
         val ps = profileFunction.getRequestedProfile() ?: return
-        val requestedProfile = ProfileSealed.PS(ps)
+        val requestedProfile = ProfileSealed.PS(ps, activePlugin)
         val runningProfile = profileFunction.getProfile()
         val lastConnection = pump.lastDataTime()
         val now = dateUtil.now()

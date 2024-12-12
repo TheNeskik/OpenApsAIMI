@@ -2,8 +2,8 @@ package info.nightscout.androidaps.plugins.pump.medtronic.comm.history
 
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
+import app.aaps.core.utils.StringUtil
 import info.nightscout.androidaps.plugins.pump.medtronic.util.MedtronicUtil
-import info.nightscout.pump.common.utils.StringUtil
 import org.apache.commons.lang3.StringUtils
 
 /**
@@ -56,7 +56,7 @@ abstract class MedtronicHistoryDecoder<T : MedtronicHistoryEntry?>(
         if (!statisticsEnabled) return
         // unknownOpCodes = HashMap()
         // mapStatistics = HashMap()
-        for (stat in RecordDecodeStatus.values()) {
+        for (stat in RecordDecodeStatus.entries) {
             mapStatistics[stat] = hashMapOf()
             //(mapStatistics as HashMap<RecordDecodeStatus, MutableMap<String, String>>)[stat] = hashMapOf()
         }

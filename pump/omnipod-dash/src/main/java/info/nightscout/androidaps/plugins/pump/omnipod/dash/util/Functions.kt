@@ -1,7 +1,8 @@
 package info.nightscout.androidaps.plugins.pump.omnipod.dash.util
 
+import app.aaps.core.data.pump.defs.PumpType
 import app.aaps.core.interfaces.profile.Profile
-import app.aaps.core.interfaces.pump.defs.PumpType
+import app.aaps.core.interfaces.pump.defs.determineCorrectBasalSize
 import info.nightscout.androidaps.plugins.pump.omnipod.dash.driver.pod.definition.BasalProgram
 import kotlin.math.roundToInt
 
@@ -38,11 +39,11 @@ fun mapProfileToBasalProgram(profile: Profile): BasalProgram {
             )
         }
 
-        if (entries.size == 0 && basalValue.timeAsSeconds != 0) {
+        if (entries.isEmpty() && basalValue.timeAsSeconds != 0) {
             throw IllegalArgumentException("First basal segment start time should be 0")
         }
 
-        if (entries.size > 0 && entries[entries.size - 1].endSlotIndex != startSlotIndex) {
+        if (entries.isNotEmpty() && entries[entries.size - 1].endSlotIndex != startSlotIndex) {
             throw IllegalArgumentException("Illegal start time for basal segment: does not match previous previous segment's end time")
         }
 

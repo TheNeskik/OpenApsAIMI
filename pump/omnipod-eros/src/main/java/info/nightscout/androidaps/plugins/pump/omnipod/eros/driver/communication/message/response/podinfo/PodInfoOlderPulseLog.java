@@ -2,12 +2,14 @@ package info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communicatio
 
 import android.text.TextUtils;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import app.aaps.core.utils.pump.ByteUtil;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.PodInfoType;
-import info.nightscout.pump.common.utils.ByteUtil;
 
 public class PodInfoOlderPulseLog extends PodInfo {
     private static final int MINIMUM_MESSAGE_LENGTH = 3;
@@ -30,7 +32,7 @@ public class PodInfoOlderPulseLog extends PodInfo {
         }
     }
 
-    @Override
+    @NonNull @Override
     public PodInfoType getType() {
         return PodInfoType.OLDER_PULSE_LOG;
     }
@@ -39,7 +41,7 @@ public class PodInfoOlderPulseLog extends PodInfo {
         return Collections.unmodifiableList(dwords);
     }
 
-    @Override
+    @NonNull @Override
     public String toString() {
         String out = "PodInfoOlderPulseLog{" +
                 "dwords=[";

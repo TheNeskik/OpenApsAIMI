@@ -9,9 +9,9 @@ import org.joda.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import app.aaps.core.utils.pump.ByteUtil;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.IRawRepresentable;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.OmnipodConstants;
-import info.nightscout.pump.common.utils.ByteUtil;
 
 public class RateEntry implements IRawRepresentable {
 
@@ -24,7 +24,7 @@ public class RateEntry implements IRawRepresentable {
         this.delayBetweenPulsesInSeconds = delayBetweenPulsesInSeconds;
     }
 
-    public static List<RateEntry> createEntries(double rate, Duration duration) {
+    @NonNull public static List<RateEntry> createEntries(double rate, Duration duration) {
         if (Duration.ZERO.equals(duration)) {
             throw new IllegalArgumentException("Duration may not be 0 minutes.");
         }

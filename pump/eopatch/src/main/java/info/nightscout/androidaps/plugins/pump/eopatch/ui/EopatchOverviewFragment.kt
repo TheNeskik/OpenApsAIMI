@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
+import app.aaps.core.ui.toast.ToastUtils
 import dagger.android.support.DaggerAppCompatActivity
 import info.nightscout.androidaps.plugins.pump.eopatch.R
 import info.nightscout.androidaps.plugins.pump.eopatch.code.EventType
@@ -17,7 +18,7 @@ import info.nightscout.androidaps.plugins.pump.eopatch.core.code.BolusType
 import info.nightscout.androidaps.plugins.pump.eopatch.databinding.FragmentEopatchOverviewBinding
 import info.nightscout.androidaps.plugins.pump.eopatch.extension.takeOne
 import info.nightscout.androidaps.plugins.pump.eopatch.ui.viewmodel.EopatchOverviewViewModel
-import app.aaps.core.ui.toast.ToastUtils
+import info.nightscout.androidaps.plugins.pump.eopatch.vo.TempBasalManager
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import javax.inject.Inject
 
@@ -26,6 +27,7 @@ class EopatchOverviewFragment : EoBaseFragment<FragmentEopatchOverviewBinding>()
     @Inject lateinit var rxBus: RxBus
     @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var aapsLogger: AAPSLogger
+    @Inject lateinit var tempBasalManager: TempBasalManager
     private lateinit var resultLauncherForResume: ActivityResultLauncher<Intent>
     private lateinit var resultLauncherForPause: ActivityResultLauncher<Intent>
 
@@ -43,7 +45,7 @@ class EopatchOverviewFragment : EoBaseFragment<FragmentEopatchOverviewBinding>()
         super.onViewCreated(view, savedInstanceState)
 
         binding.apply {
-            viewmodel = ViewModelProvider(this@EopatchOverviewFragment, viewModelFactory).get(EopatchOverviewViewModel::class.java)
+            viewmodel = ViewModelProvider(this@EopatchOverviewFragment, viewModelFactory)[EopatchOverviewViewModel::class.java]
             viewmodel?.apply {
                 eventHandler.observe(viewLifecycleOwner) { evt ->
                     when (evt.peekContent()) {
@@ -160,23 +162,20 @@ class EopatchOverviewFragment : EoBaseFragment<FragmentEopatchOverviewBinding>()
 
     private fun getSuspendDialogText(): String {
         binding.viewmodel?.apply {
-            val isBolusActive = patchManager.patchState.isBolusActive
-            val isTempBasalActive = patchManager.patchState.isTempBasalActive
-            val tempRate = patchManager.preferenceManager.getTempBasalManager().startedBasal?.doseUnitText ?: ""
-            val tempRemainTime = patchManager.preferenceManager.getTempBasalManager().startedBasal?.remainTimeText ?: ""
-            var remainBolus = patchManager.patchState.isNowBolusActive.takeOne(patchManager.bolusCurrent.remain(BolusType.NOW), 0f)
-            remainBolus += patchManager.patchState.isExtBolusActive.takeOne(patchManager.bolusCurrent.remain(BolusType.EXT), 0f)
+            val isBolusActive = preferenceManager.patchState.isBolusActive
+            val isTempBasalActive = preferenceManager.patchState.isTempBasalActive
+            val tempRate = tempBasalManager.startedBasal?.doseUnitText ?: ""
+            val tempRemainTime = tempBasalManager.startedBasal?.remainTimeText ?: ""
+            var remainBolus = preferenceManager.patchState.isNowBolusActive.takeOne(preferenceManager.bolusCurrent.remain(BolusType.NOW), 0f)
+            remainBolus += preferenceManager.patchState.isExtBolusActive.takeOne(preferenceManager.bolusCurrent.remain(BolusType.EXT), 0f)
 
             val sbMsg = StringBuilder()
 
-            if (isBolusActive && isTempBasalActive) {
-                sbMsg.append(getString(R.string.insulin_suspend_msg1, tempRate, tempRemainTime, remainBolus))
-            } else if (isBolusActive) {
-                sbMsg.append(getString(R.string.insulin_suspend_msg2, remainBolus))
-            } else if (isTempBasalActive) {
-                sbMsg.append(getString(R.string.insulin_suspend_msg3, tempRate, tempRemainTime))
-            } else {
-                sbMsg.append(getString(R.string.insulin_suspend_msg4))
+            when {
+                isBolusActive && isTempBasalActive -> sbMsg.append(getString(R.string.insulin_suspend_msg1, tempRate, tempRemainTime, remainBolus))
+                isBolusActive                      -> sbMsg.append(getString(R.string.insulin_suspend_msg2, remainBolus))
+                isTempBasalActive                  -> sbMsg.append(getString(R.string.insulin_suspend_msg3, tempRate, tempRemainTime))
+                else                               -> sbMsg.append(getString(R.string.insulin_suspend_msg4))
             }
             return sbMsg.toString()
         }

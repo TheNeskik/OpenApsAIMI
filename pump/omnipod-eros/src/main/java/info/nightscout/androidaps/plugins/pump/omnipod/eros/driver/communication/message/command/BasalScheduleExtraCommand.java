@@ -7,12 +7,12 @@ import org.joda.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import app.aaps.core.utils.pump.ByteUtil;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.MessageBlock;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.MessageBlockType;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.OmnipodConstants;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.schedule.BasalSchedule;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.schedule.RateEntry;
-import info.nightscout.pump.common.utils.ByteUtil;
 
 public class BasalScheduleExtraCommand extends MessageBlock {
     private final boolean acknowledgementBeep;
@@ -38,7 +38,7 @@ public class BasalScheduleExtraCommand extends MessageBlock {
         encode();
     }
 
-    public BasalScheduleExtraCommand(BasalSchedule schedule, Duration scheduleOffset,
+    public BasalScheduleExtraCommand(@NonNull BasalSchedule schedule, Duration scheduleOffset,
                                      boolean acknowledgementBeep, boolean completionBeep, Duration programReminderInterval) {
         rateEntries = new ArrayList<>();
         this.acknowledgementBeep = acknowledgementBeep;

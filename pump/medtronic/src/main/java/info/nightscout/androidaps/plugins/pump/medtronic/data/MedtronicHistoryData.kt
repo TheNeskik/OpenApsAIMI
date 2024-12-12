@@ -1,18 +1,19 @@
 package info.nightscout.androidaps.plugins.pump.medtronic.data
 
+import app.aaps.core.data.model.TE
+import app.aaps.core.data.pump.defs.PumpType
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.notifications.Notification
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.ProfileUtil
-import app.aaps.core.interfaces.pump.DetailedBolusInfo
 import app.aaps.core.interfaces.pump.PumpSync
-import app.aaps.core.interfaces.pump.defs.PumpType
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.sharedPreferences.SP
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.utils.DateTimeUtil
+import app.aaps.core.utils.StringUtil
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.android.HasAndroidInjector
@@ -38,7 +39,6 @@ import info.nightscout.pump.common.sync.PumpDbEntryBolus
 import info.nightscout.pump.common.sync.PumpDbEntryCarbs
 import info.nightscout.pump.common.sync.PumpDbEntryTBR
 import info.nightscout.pump.common.sync.PumpSyncStorage
-import info.nightscout.pump.common.utils.StringUtil
 import org.apache.commons.lang3.StringUtils
 import org.joda.time.LocalDateTime
 import java.util.GregorianCalendar
@@ -133,7 +133,6 @@ class MedtronicHistoryData @Inject constructor(
         val bolusEstimates: MutableList<PumpHistoryEntry> = mutableListOf()
         val aTechDate = DateTimeUtil.toATechDate(GregorianCalendar())
 
-        //aapsLogger.debug(LTag.PUMP, "Filter new entries: Before {}", newHistory);
         if (!isCollectionEmpty(newHistory)) {
             for (pumpHistoryEntry in newHistory) {
                 if (!allPumpIds.contains(pumpHistoryEntry.pumpId)) {
@@ -155,7 +154,7 @@ class MedtronicHistoryData @Inject constructor(
                 }
             }
             tbrs = preProcessTBRs(tbrs)
-            if (bolusEstimates.size > 0) {
+            if (bolusEstimates.isNotEmpty()) {
                 extendBolusRecords(bolusEstimates, newHistory2)
             }
             newHistory2.addAll(tbrs)
@@ -483,7 +482,7 @@ class MedtronicHistoryData @Inject constructor(
             uploadCareportalEventIfFoundInHistory(
                 lastPrimeRecord,
                 MedtronicConst.Statistics.LastPrime,
-                DetailedBolusInfo.EventType.CANNULA_CHANGE
+                TE.Type.CANNULA_CHANGE
             )
         }
     }
@@ -504,7 +503,7 @@ class MedtronicHistoryData @Inject constructor(
             uploadCareportalEventIfFoundInHistory(
                 lastRewindRecord,
                 MedtronicConst.Statistics.LastRewind,
-                DetailedBolusInfo.EventType.INSULIN_CHANGE
+                TE.Type.INSULIN_CHANGE
             )
         }
     }
@@ -533,12 +532,12 @@ class MedtronicHistoryData @Inject constructor(
             uploadCareportalEventIfFoundInHistory(
                 lastBatteryChangeRecord,
                 MedtronicConst.Statistics.LastBatteryChange,
-                DetailedBolusInfo.EventType.PUMP_BATTERY_CHANGE
+                TE.Type.PUMP_BATTERY_CHANGE
             )
         }
     }
 
-    private fun uploadCareportalEventIfFoundInHistory(historyRecord: PumpHistoryEntry, eventSP: String, eventType: DetailedBolusInfo.EventType) {
+        private fun uploadCareportalEventIfFoundInHistory(historyRecord: PumpHistoryEntry, eventSP: String, eventType: TE.Type) {
         val lastPrimeFromAAPS = sp.getLong(eventSP, 0L)
         if (historyRecord.atechDateTime != lastPrimeFromAAPS) {
             val result = pumpSync.insertTherapyEventIfNewWithTimestamp(
@@ -601,7 +600,7 @@ class MedtronicHistoryData @Inject constructor(
         for (bolus in entryList) {
 
             val bolusDTO = bolus.decodedData["Object"] as BolusDTO
-            //var type: DetailedBolusInfo.BolusType = DetailedBolusInfo.BolusType.NORMAL
+            //var type: BS.Type = BS.Type.NORMAL
             var multiwave = false
 
             if (bolusDTO.bolusType == PumpBolusType.Extended) {
@@ -1126,7 +1125,7 @@ class MedtronicHistoryData @Inject constructor(
         aapsLogger.debug(LTag.PUMP, "SuspendResume Records: $filteredItems")
 
         val outList: MutableList<TempBasalProcessDTO> = mutableListOf()
-        if (filteredItems.size > 0) {
+        if (filteredItems.isNotEmpty()) {
             val filtered2Items: MutableList<PumpHistoryEntry> = mutableListOf()
             if (filteredItems.size % 2 == 0 && filteredItems[0].entryType === PumpHistoryEntryType.ResumePump) {
                 // full resume suspends (S R S R)
@@ -1157,7 +1156,7 @@ class MedtronicHistoryData @Inject constructor(
                     filtered2Items.addAll(filteredItems)
                 }
             }
-            if (filtered2Items.size > 0) {
+            if (filtered2Items.isNotEmpty()) {
                 sort(filtered2Items)
                 filtered2Items.reverse()
                 var i = 0
@@ -1189,7 +1188,7 @@ class MedtronicHistoryData @Inject constructor(
         aapsLogger.debug(LTag.PUMP, "Prime Records: $primeItems")
 
         val outList: MutableList<TempBasalProcessDTO> = ArrayList()
-        if (primeItems.size == 0) return outList
+        if (primeItems.isEmpty()) return outList
         val filteredItems: MutableList<PumpHistoryEntry> = getFilteredItems(
             newHistory,  //
             setOf(
@@ -1249,7 +1248,7 @@ class MedtronicHistoryData @Inject constructor(
         val itemTwo = items[0]
 
         items = getFilteredItems(tempData, PumpHistoryEntryType.NoDeliveryAlarm)
-        if (items.size > 0) {
+        if (items.isNotEmpty()) {
             val tbrProcess = TempBasalProcessDTO(
                 itemOne = items[items.size - 1],
                 aapsLogger = aapsLogger,
@@ -1265,7 +1264,7 @@ class MedtronicHistoryData @Inject constructor(
         }
 
         items = getFilteredItems(tempData, PumpHistoryEntryType.Rewind)
-        if (items.size > 0) {
+        if (items.isNotEmpty()) {
             val tbrProcess = TempBasalProcessDTO(
                 itemOne = items[0],
                 aapsLogger = aapsLogger,
@@ -1295,7 +1294,7 @@ class MedtronicHistoryData @Inject constructor(
                 tddsOut.add(tdd)
             }
         }
-        return if (tddsOut.size == 0) tdds else tddsOut
+        return if (tddsOut.isEmpty()) tdds else tddsOut
     }
 
     private fun tryToGetByLocalTime(aTechDateTime: Long): Long {
@@ -1366,9 +1365,6 @@ class MedtronicHistoryData @Inject constructor(
 
     // HELPER METHODS
     private fun sort(list: MutableList<PumpHistoryEntry>) {
-        // if (list != null && !list.isEmpty()) {
-        //     Collections.sort(list, PumpHistoryEntry.Comparator())
-        // }
         list.sortWith(PumpHistoryEntry.Comparator())
     }
 

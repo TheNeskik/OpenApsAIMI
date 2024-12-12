@@ -12,21 +12,21 @@ import android.widget.Spinner
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import app.aaps.core.data.pump.defs.PumpType
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.profile.Profile.ProfileValue
-import app.aaps.core.interfaces.pump.defs.PumpType
+import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
+import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.R
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.definition.PodHistoryEntryType
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.history.ErosHistory
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.history.database.ErosHistoryRecordEntity
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.util.AapsOmnipodUtil
-import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
 import info.nightscout.pump.common.defs.PumpHistoryEntryGroup
 import info.nightscout.pump.common.defs.PumpHistoryEntryGroup.Companion.getTranslatedList
 import info.nightscout.pump.common.defs.TempBasalPair
-import info.nightscout.pump.common.utils.ProfileUtil.getBasalProfilesDisplayable
 import java.util.Calendar
 import java.util.GregorianCalendar
 import javax.inject.Inject
@@ -37,6 +37,7 @@ class ErosPodHistoryActivity : TranslatedDaggerAppCompatActivity() {
     @Inject lateinit var aapsOmnipodUtil: AapsOmnipodUtil
     @Inject lateinit var rh: ResourceHelper
     @Inject lateinit var erosHistory: ErosHistory
+    @Inject lateinit var profileUtil: ProfileUtil
 
     private var historyTypeSpinner: Spinner? = null
     private var statusView: TextView? = null
@@ -171,17 +172,19 @@ class ErosPodHistoryActivity : TranslatedDaggerAppCompatActivity() {
                     }
 
                     PodHistoryEntryType.INSERT_CANNULA, PodHistoryEntryType.SET_BASAL_SCHEDULE                                                                                                                                                                                                                                                                                                                                                                                                                                                                       -> {
-                        if (historyEntry.data != null) {
-                            setProfileValue(historyEntry.data, valueView)
+                        historyEntry.data?.let {
+                            setProfileValue(it, valueView)
                         }
                     }
 
                     PodHistoryEntryType.SET_BOLUS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    -> {
-                        if (historyEntry.data.contains(";")) {
-                            val splitVal = historyEntry.data.split(";".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                            valueView.text = rh.gs(R.string.omnipod_eros_history_bolus_value_with_carbs, java.lang.Double.valueOf(splitVal[0]), java.lang.Double.valueOf(splitVal[1]))
-                        } else {
-                            valueView.text = rh.gs(R.string.omnipod_eros_history_bolus_value, java.lang.Double.valueOf(historyEntry.data))
+                        historyEntry.data?.let {
+                            if (it.contains(";")) {
+                                val splitVal = it.split(";".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                                valueView.text = rh.gs(R.string.omnipod_eros_history_bolus_value_with_carbs, java.lang.Double.valueOf(splitVal[0]), java.lang.Double.valueOf(splitVal[1]))
+                            } else {
+                                valueView.text = rh.gs(R.string.omnipod_eros_history_bolus_value, java.lang.Double.valueOf(it))
+                            }
                         }
                     }
 
@@ -206,7 +209,7 @@ class ErosPodHistoryActivity : TranslatedDaggerAppCompatActivity() {
             aapsLogger.debug(LTag.PUMP, "Profile json:\n$data")
             try {
                 val profileValuesArray = aapsOmnipodUtil.gsonInstance.fromJson(data, Array<ProfileValue>::class.java)
-                valueView.text = getBasalProfilesDisplayable(profileValuesArray, PumpType.OMNIPOD_EROS)
+                valueView.text = profileUtil.getBasalProfilesDisplayable(profileValuesArray, PumpType.OMNIPOD_EROS)
             } catch (e: Exception) {
                 aapsLogger.error(LTag.PUMP, "Problem parsing Profile json. Ex: {}, Data:\n{}", e.message, data)
                 valueView.text = ""
@@ -217,15 +220,9 @@ class ErosPodHistoryActivity : TranslatedDaggerAppCompatActivity() {
 
         inner class HistoryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-            val timeView: TextView
-            val typeView: TextView
-            val valueView: TextView
-
-            init {
-                timeView = itemView.findViewById(R.id.omnipod_history_time)
-                typeView = itemView.findViewById(R.id.omnipod_history_source)
-                valueView = itemView.findViewById(R.id.omnipod_history_description)
-            }
+            val timeView: TextView = itemView.findViewById(R.id.omnipod_history_time)
+            val typeView: TextView = itemView.findViewById(R.id.omnipod_history_source)
+            val valueView: TextView = itemView.findViewById(R.id.omnipod_history_description)
         }
     }
 }

@@ -3,6 +3,7 @@ package info.nightscout.androidaps.plugins.pump.medtronic.comm.history.pump
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.utils.DateTimeUtil
+import app.aaps.core.utils.pump.ByteUtil
 import info.nightscout.androidaps.plugins.pump.medtronic.comm.history.MedtronicHistoryDecoder
 import info.nightscout.androidaps.plugins.pump.medtronic.comm.history.RecordDecodeStatus
 import info.nightscout.androidaps.plugins.pump.medtronic.comm.history.pump.PumpHistoryEntryType.Companion.getByCode
@@ -14,7 +15,6 @@ import info.nightscout.androidaps.plugins.pump.medtronic.data.dto.TempBasalPair
 import info.nightscout.androidaps.plugins.pump.medtronic.defs.MedtronicDeviceType
 import info.nightscout.androidaps.plugins.pump.medtronic.defs.PumpBolusType
 import info.nightscout.androidaps.plugins.pump.medtronic.util.MedtronicUtil
-import info.nightscout.pump.common.utils.ByteUtil
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -43,7 +43,7 @@ class MedtronicPumpHistoryDecoder @Inject constructor(
         var incompletePacket: Boolean
         val outList: MutableList<PumpHistoryEntry> = mutableListOf()
         var skipped: String? = null
-        if (dataClearInput.size == 0) {
+        if (dataClearInput.isEmpty()) {
             aapsLogger.error(LTag.PUMPBTCOMM, "Empty page.")
             return outList
         }
@@ -346,17 +346,17 @@ class MedtronicPumpHistoryDecoder @Inject constructor(
             dto.unabsorbedInsulin = ((body[10].toInt() shl 8) + body[11]) / bolusStrokes
             dto.bolusTotal = ((body[12].toInt() shl 8) + body[13]) / bolusStrokes
         } else {
-            dto.bloodGlucose = (body.get(1) and 0x0F).toInt() shl 8 or entry.head.get(0).toInt()
+            dto.bloodGlucose = (body[1] and 0x0F).toInt() shl 8 or entry.head[0].toInt()
             dto.carbs = body[0].toInt()
             dto.carbRatio = body[2].toFloat()
             dto.insulinSensitivity = body[3].toFloat()
-            dto.bgTargetLow = body.get(4).toInt()
-            dto.bgTargetHigh = body.get(12).toInt()
-            dto.bolusTotal = body.get(11) / bolusStrokes
-            dto.foodEstimate = body.get(6) / bolusStrokes
-            dto.unabsorbedInsulin = body.get(9) / bolusStrokes
-            dto.bolusTotal = body.get(11) / bolusStrokes
-            dto.correctionEstimate = (body.get(7) + (body.get(5) and 0x0F)) / bolusStrokes
+            dto.bgTargetLow = body[4].toInt()
+            dto.bgTargetHigh = body[12].toInt()
+            dto.bolusTotal = body[11] / bolusStrokes
+            dto.foodEstimate = body[6] / bolusStrokes
+            dto.unabsorbedInsulin = body[9] / bolusStrokes
+            dto.bolusTotal = body[11] / bolusStrokes
+            dto.correctionEstimate = (body[7] + (body[5] and 0x0F)) / bolusStrokes
         }
         if (dto.bloodGlucose < 0) {
             dto.bloodGlucose = ByteUtil.convertUnsignedByteToInt(dto.bloodGlucose.toByte())
@@ -485,7 +485,7 @@ class MedtronicPumpHistoryDecoder @Inject constructor(
     }
 
     private fun decodeDateTime(entry: PumpHistoryEntry) {
-        if (entry.datetime.size == 0) {
+        if (entry.datetime.isEmpty()) {
             aapsLogger.warn(LTag.PUMPBTCOMM, "DateTime not set.")
         }
         val dt = entry.datetime

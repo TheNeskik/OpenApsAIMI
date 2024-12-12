@@ -1,10 +1,12 @@
 package info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.command;
 
+import androidx.annotation.NonNull;
+
 import org.joda.time.DateTime;
 
+import app.aaps.core.utils.pump.ByteUtil;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.MessageBlock;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.MessageBlockType;
-import info.nightscout.pump.common.utils.ByteUtil;
 
 public class SetupPodCommand extends MessageBlock {
 
@@ -44,7 +46,7 @@ public class SetupPodCommand extends MessageBlock {
         encodedData = ByteUtil.INSTANCE.concat(encodedData, ByteUtil.INSTANCE.getBytesFromInt(tid));
     }
 
-    @Override
+    @NonNull @Override
     public String toString() {
         return "SetupPodCommand{" +
                 "lot=" + lot +

@@ -1,17 +1,19 @@
 package info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.response;
 
+import androidx.annotation.NonNull;
+
 import org.joda.time.Duration;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import app.aaps.core.utils.pump.ByteUtil;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.MessageBlock;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.AlertSet;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.DeliveryStatus;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.MessageBlockType;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.OmnipodConstants;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.PodProgressStatus;
-import info.nightscout.pump.common.utils.ByteUtil;
 
 public class StatusResponse extends MessageBlock implements StatusUpdatableResponse {
     private static final int MESSAGE_LENGTH = 10;
@@ -109,7 +111,7 @@ public class StatusResponse extends MessageBlock implements StatusUpdatableRespo
         return stream.toByteArray();
     }
 
-    @Override public String toString() {
+    @NonNull @Override public String toString() {
         return "StatusResponse{" +
                 "deliveryStatus=" + deliveryStatus +
                 ", podProgressStatus=" + podProgressStatus +

@@ -1,12 +1,13 @@
 package info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.response;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import app.aaps.core.utils.pump.ByteUtil;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.communication.message.MessageBlock;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.FaultEventCode;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.MessageBlockType;
 import info.nightscout.androidaps.plugins.pump.omnipod.eros.driver.definition.PodProgressStatus;
-import info.nightscout.pump.common.utils.ByteUtil;
 
 public class ErrorResponse extends MessageBlock {
     public static final byte ERROR_RESPONSE_CODE_BAD_NONCE = (byte) 0x14;
@@ -15,12 +16,12 @@ public class ErrorResponse extends MessageBlock {
 
     private final byte errorResponseCode;
 
-    private final Integer nonceSearchKey; // only valid for BAD_NONCE
+    @Nullable private final Integer nonceSearchKey; // only valid for BAD_NONCE
     private final FaultEventCode faultEventCode; // valid for all but BAD_NONCE
 
     private final PodProgressStatus podProgressStatus; // valid for all but BAD_NONCE
 
-    public ErrorResponse(byte[] encodedData) {
+    public ErrorResponse(@NonNull byte[] encodedData) {
         if (encodedData.length < MESSAGE_LENGTH) {
             throw new IllegalArgumentException("Not enough data");
         }
@@ -41,7 +42,7 @@ public class ErrorResponse extends MessageBlock {
         }
     }
 
-    @Override
+    @NonNull @Override
     public MessageBlockType getType() {
         return MessageBlockType.ERROR_RESPONSE;
     }
