@@ -1,5 +1,6 @@
 package app.aaps.plugins.aps.openAPSAIMI
 
+import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -112,6 +113,19 @@ class AimiNeuralNetwork(
     private fun mseLoss(output: DoubleArray, target: DoubleArray): Double {
         val sumSq = output.indices.sumOf { i -> (output[i] - target[i]).pow(2.0) }
         return sumSq / output.size
+    }
+
+    private fun customLoss(output: DoubleArray, target: DoubleArray): Double {
+        var loss = 0.0
+        for (i in output.indices) {
+            val diff = output[i] - target[i]
+            loss += when {
+                target[i] < 80 -> 10 * diff.pow(2.0) // Heavily penalize BG < 80
+                diff.absoluteValue <= 2 -> 0.5 * diff.pow(2.0) // Reward stable BG within +/-2
+                else -> diff.pow(2.0) // Normal MSE for other cases
+            }
+        }
+        return loss / output.size
     }
 
     private fun l2Regularization(): Double {
@@ -238,7 +252,7 @@ class AimiNeuralNetwork(
 
                     // recalc pour la loss
                     val out = forwardPass(input, inferenceMode = false).second
-                    totalLoss += mseLoss(out, target)
+                    totalLoss += customLoss(out, target) // Use custom loss function
                 }
             }
 
@@ -272,7 +286,7 @@ class AimiNeuralNetwork(
         var totalLoss = 0.0
         for (i in valInputs.indices) {
             val out = forwardPass(valInputs[i], inferenceMode = true).second
-            totalLoss += mseLoss(out, valTargets[i])
+            totalLoss += customLoss(out, valTargets[i]) // Use custom loss function
         }
         totalLoss += l2Regularization()
         return totalLoss / valInputs.size
