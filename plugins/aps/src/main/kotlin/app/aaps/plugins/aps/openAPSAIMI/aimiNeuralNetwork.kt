@@ -119,9 +119,10 @@ class AimiNeuralNetwork(
         var loss = 0.0
         for (i in output.indices) {
             val diff = output[i] - target[i]
+            val diff2 = output[i] - 100
             loss += when {
-                target[i] < 90 -> 10 * diff.pow(2.0) // Heavily penalize BG < 90
-                target[i] < 120 && diff.absoluteValue <= 2 -> 0.5 * diff.pow(2.0) // Reward stable BG within +/-2 if BG < 120
+                output[i] < 90 -> 10 * diff.pow(2.0) // Heavily penalize BG < 90
+                output[i] < 110 && output[i] >90 && diff2.absoluteValue <= 2 -> 0.25 * diff.pow(2.0) // Reward stable BG within +/-2 if BG < 120
                 else -> diff.pow(2.0) // Normal MSE for other cases
             }
         }
