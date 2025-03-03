@@ -45,6 +45,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.math.round
 
 @Singleton
 class DetermineBasalaimiSMB2 @Inject constructor(
@@ -84,6 +85,9 @@ class DetermineBasalaimiSMB2 @Inject constructor(
     private var tags60to120minAgo = ""
     private var tags120to180minAgo = ""
     private var tags180to240minAgo = ""
+    private var tags240to300minAgo = ""
+    private var tags300to360minAgo = ""
+    private var tags360to420minAgo = ""
     private var tir1DAYabove: Double = 0.0
     private var currentTIRLow: Double = 0.0
     private var currentTIRRange: Double = 0.0
@@ -146,6 +150,15 @@ class DetermineBasalaimiSMB2 @Inject constructor(
     private var insulinPeakTime = 0.0
 
     private fun Double.toFixed2(): String = DecimalFormat("0.00#").format(round(this, 2))
+
+    fun roundTriple(triple: Triple<Float, Float, Float>, decimals: Int): Triple<Float, Float, Float> {
+        val factor = 10.0.pow(decimals).toFloat()
+        return Triple(
+            round(triple.first * factor) / factor,
+            round(triple.second * factor) / factor,
+            round(triple.third * factor) / factor
+        )
+    }
 
     private fun roundBasal(value: Double): Double = value
 
@@ -423,12 +436,12 @@ class DetermineBasalaimiSMB2 @Inject constructor(
         }
 
         return variableSensitivity in 5.0f..10f &&
-            targetBg in 70.0f..85.0f &&
+            targetBg in 70.0f..95.0f &&
             delta >= 12 &&
             shortAvgDelta >= 12 &&
             autodrive &&
             slopeFromMinDeviation >= 1.5 &&
-            bg > 120
+            bg > 110
     }
 
     private fun isMealModeCondition(): Boolean {
@@ -1007,8 +1020,8 @@ class DetermineBasalaimiSMB2 @Inject constructor(
         bgAdjustment *= 1.2f
 
         val dynamicCorrection = when {
-            combinedDelta > 8f  -> 2.5f   // Très forte montée, on augmente très agressivement
-            combinedDelta > 6f  -> 1.8f   // Montée forte
+            combinedDelta > 8f  -> 1.8f   // Très forte montée, on augmente très agressivement
+            combinedDelta > 6f  -> 1.6f   // Montée forte
             combinedDelta > 4f  -> 1.5f   // Montée modérée à forte
             combinedDelta > 2f  -> 1.3f   // Montée légère
             combinedDelta in -2f..2f -> 1.0f  // Stable
@@ -1023,8 +1036,8 @@ class DetermineBasalaimiSMB2 @Inject constructor(
         // // Interpolation pour scalingFactor basée sur la cible (targetBg)
         // val scalingFactor = interpolateFactor(bg.toFloat(), targetBg, 110f, 09f, 0.5f).coerceAtLeast(0.1f)
 
-        val maxIncreaseFactor = 12.5f
-        val maxDecreaseFactor = 0.2f
+        val maxIncreaseFactor = 1.7f
+        val maxDecreaseFactor = 0.5f
 
         val adjustFactor = { factor: Float ->
             val adjustedFactor = factor * bgAdjustment * hypoAdjustment //* scalingFactor
@@ -1799,6 +1812,9 @@ class DetermineBasalaimiSMB2 @Inject constructor(
         this.tags60to120minAgo = parseNotes(60, 120)
         this.tags120to180minAgo = parseNotes(120, 180)
         this.tags180to240minAgo = parseNotes(180, 240)
+        this.tags240to300minAgo = parseNotes(240, 300)
+        this.tags300to360minAgo = parseNotes(300,360)
+        this.tags360to420minAgo = parseNotes(360, 420)
         this.delta = glucose_status.delta.toFloat()
         this.shortAvgDelta = glucose_status.shortAvgDelta.toFloat()
         this.longAvgDelta = glucose_status.longAvgDelta.toFloat()
@@ -2685,7 +2701,7 @@ class DetermineBasalaimiSMB2 @Inject constructor(
             appendLine("╔${"═".repeat(screenWidth)}╗")
             appendLine(String.format("║ %-${screenWidth}s ║", "Adjusted Factors"))
             appendLine("╠${"═".repeat(screenWidth)}╣")
-            appendLine(String.format("║ %-${columnWidth}s │ %s", "Factors", adjustedFactors))
+            appendLine(String.format("║ %-${columnWidth}s │ %s", "Factors", roundTriple(adjustedFactors,2)))
             appendLine("╚${"═".repeat(screenWidth)}╝")
             appendLine()
 
@@ -2780,6 +2796,9 @@ class DetermineBasalaimiSMB2 @Inject constructor(
             appendLine(String.format("║ %-${columnWidth}s │ %s", "tags60-120m", tags60to120minAgo))
             appendLine(String.format("║ %-${columnWidth}s │ %s", "tags120-180m", tags120to180minAgo))
             appendLine(String.format("║ %-${columnWidth}s │ %s", "tags180-240m", tags180to240minAgo))
+            appendLine(String.format("║ %-${columnWidth}s │ %s", "tags240-300m", tags240to300minAgo))
+            appendLine(String.format("║ %-${columnWidth}s │ %s", "tags300-360m", tags300to360minAgo))
+            appendLine(String.format("║ %-${columnWidth}s │ %s", "tags360-420m", tags360to420minAgo))
             appendLine("╚${"═".repeat(screenWidth)}╝")
             appendLine()
 

@@ -118,6 +118,8 @@ class AimiNeuralNetwork(
     private fun customLoss(output: DoubleArray, target: DoubleArray): Double {
         var loss = 0.0
         for (i in output.indices) {
+            println(output[i])
+            println(target[i])
             val diff = output[i] - target[i]
             val diff2 = output[i] - 100
             loss += when {
@@ -253,7 +255,7 @@ class AimiNeuralNetwork(
 
                     // recalc pour la loss
                     val out = forwardPass(input, inferenceMode = false).second
-                    totalLoss += customLoss(out, target) // Use custom loss function
+                    totalLoss += mseLoss(out, target) // Use custom loss function
                 }
             }
 
@@ -287,7 +289,7 @@ class AimiNeuralNetwork(
         var totalLoss = 0.0
         for (i in valInputs.indices) {
             val out = forwardPass(valInputs[i], inferenceMode = true).second
-            totalLoss += customLoss(out, valTargets[i]) // Use custom loss function
+            totalLoss += mseLoss(out, valTargets[i]) // Use custom loss function
         }
         totalLoss += l2Regularization()
         return totalLoss / valInputs.size
