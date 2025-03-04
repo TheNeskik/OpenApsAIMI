@@ -25,7 +25,8 @@ import kotlin.math.roundToInt
 @Singleton
 class DetermineBasalLSTM @Inject constructor(
     private val profileUtil: ProfileUtil,
-    private val fabricPrivacy: FabricPrivacy
+    private val fabricPrivacy: FabricPrivacy,
+    private val plugin: OpenAPSLSTMPlugin
 ) {
 
     private val consoleError = mutableListOf<String>()
@@ -149,6 +150,12 @@ class DetermineBasalLSTM @Inject constructor(
         }
     }
 
+    fun determineBasal(inputData: List<Double>): Double {
+        val inputArray = inputData.map { it.toFloat() }.toFloatArray()
+        val prediction = plugin.predict(inputArray)
+        return prediction.first().toDouble()
+    }
+/*
     fun determine_basal(
         glucose_status: GlucoseStatus, currenttemp: CurrentTemp, iob_data_array: Array<IobTotal>, profile: OapsProfile, autosens_data: AutosensResult, meal_data: MealData,
         microBolusAllowed: Boolean, currentTime: Long, flatBGsDetected: Boolean, dynIsfMode: Boolean
@@ -1152,4 +1159,5 @@ class DetermineBasalLSTM @Inject constructor(
             return setTempBasal(rate, 30, profile, rT, currenttemp)
         }
     }
+        */
 }
